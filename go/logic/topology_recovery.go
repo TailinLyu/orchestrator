@@ -520,11 +520,6 @@ func recoverDeadMaster(topologyRecovery *TopologyRecovery, candidateInstanceKey 
 	postponedAll := false
 
 	inst.AuditOperation("recover-dead-master", failedInstanceKey, "problem found; will recover")
-	if !skipProcesses {
-		if err := executeProcesses(config.Config.PreFailoverProcesses, "PreFailoverProcesses", topologyRecovery, true); err != nil {
-			return false, nil, lostReplicas, topologyRecovery.AddError(err)
-		}
-	}
 
 	AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("RecoverDeadMaster: will recover %+v", *failedInstanceKey))
 
@@ -894,6 +889,13 @@ func checkAndRecoverDeadMaster(analysisEntry inst.ReplicationAnalysis, candidate
 	if promotedReplica, err = overrideMasterPromotion(); err != nil {
 		AuditTopologyRecovery(topologyRecovery, err.Error())
 	}
+
+	if !skipProcesses {
+		if err := executeProcesses(config.Config.PreFailoverProcesses, "PreFailoverProcesses", topologyRecovery, true); err != nil {
+			return false, nil, lostReplicas, topologyRecovery.AddError(err)
+		}
+	}
+
 	// And this is the end; whether successful or not, we're done.
 	resolveRecovery(topologyRecovery, promotedReplica)
 	// Now, see whether we are successful or not. From this point there's no going back.
