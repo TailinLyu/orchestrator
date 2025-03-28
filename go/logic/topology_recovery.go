@@ -889,7 +889,7 @@ func checkAndRecoverDeadMaster(analysisEntry inst.ReplicationAnalysis, candidate
 		return false, topologyRecovery, err
 	}
 
-	if !skipProcesses {
+	if !skipProcesses && promotedReplica != nil {
 		if err := executeProcesses(config.Config.PreFailoverProcesses, "PreFailoverProcesses", topologyRecovery, true); err != nil {
 			return recoveryAttempted, topologyRecovery, err
 		}
