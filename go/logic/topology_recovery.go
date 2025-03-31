@@ -921,11 +921,6 @@ func checkAndRecoverDeadMaster(analysisEntry inst.ReplicationAnalysis, candidate
 				_, err := inst.SetReadOnly(&promotedReplica.Key, false)
 				AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("- RecoverDeadMaster: applying read-only=0 on promoted master: success=%t", (err == nil)))
 			}
-			// Let's attempt, though we won't necessarily succeed, to set old master as read-only
-			go func() {
-				_, err := inst.SetReadOnly(&analysisEntry.AnalyzedInstanceKey, true)
-				AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("- RecoverDeadMaster: applying read-only=1 on demoted master: success=%t", (err == nil)))
-			}()
 		}
 
 		kvPairs := inst.GetClusterMasterKVPairs(analysisEntry.ClusterDetails.ClusterAlias, &promotedReplica.Key)
