@@ -1,0 +1,4 @@
+{
+  "ForceRegroupReplicaBeforePrimaryFailover": true,
+  "FailMasterPromotionOnLagMinutes": 0
+}

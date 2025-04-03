@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Check the orchestrator logs for evidence of PrePromotionProcesses execution
+echo "Checking orchestrator service logs:"
+tail -n +$(cat /tmp/orchestrator.log.lines) /var/log/journal/orchestrator.service.log | grep "Running PrePromotionProcesses hook" > /dev/null && echo "PrePromotionProcesses hook was executed"
+
+# Check the contents of our custom log file created by the hook
+echo "Checking PrePromotionProcesses output:"
+cat /tmp/prepromotion_test.log

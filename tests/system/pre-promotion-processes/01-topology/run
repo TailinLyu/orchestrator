@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Check the initial topology
+orchestrator-client -c topology-tabulated -alias ci 
+
+# Create an empty log file to capture the output from our hook
+rm -f /tmp/prepromotion_test.log
+touch /tmp/prepromotion_test.log
+
+# Store the current position in the orchestrator log file to use for log inspection later
+journalctl -u orchestrator.service | wc -l > /tmp/orchestrator.log.lines

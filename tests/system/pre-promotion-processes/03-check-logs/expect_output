@@ -1,0 +1,4 @@
+Checking orchestrator service logs:
+PrePromotionProcesses hook was executed
+Checking PrePromotionProcesses output:
+(before promotion) Recovery from DeadMaster on 127.0.0.1:10111 resolved. isSuccessful: true, Successor: 127.0.0.1:10112

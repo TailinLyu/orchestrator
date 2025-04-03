@@ -237,6 +237,7 @@ type Configuration struct {
 	OnFailureDetectionProcesses                []string          // Processes to execute when detecting a failover scenario (before making a decision whether to failover or not). May and should use some of these placeholders: {failureType}, {instanceType}, {isMaster}, {isCoMaster}, {failureDescription}, {command}, {failedHost}, {failureCluster}, {failureClusterAlias}, {failureClusterDomain}, {failedPort}, {successorHost}, {successorPort}, {successorAlias}, {countReplicas}, {replicaHosts}, {isDowntimed}, {autoMasterRecovery}, {autoIntermediateMasterRecovery}
 	PreGracefulTakeoverProcesses               []string          // Processes to execute before doing a failover (aborting operation should any once of them exits with non-zero code; order of execution undefined). May and should use some of these placeholders: {failureType}, {instanceType}, {isMaster}, {isCoMaster}, {failureDescription}, {command}, {failedHost}, {failureCluster}, {failureClusterAlias}, {failureClusterDomain}, {failedPort}, {successorHost}, {successorPort}, {countReplicas}, {replicaHosts}, {isDowntimed}
 	PreFailoverProcesses                       []string          // Processes to execute before doing a failover (aborting operation should any once of them exits with non-zero code; order of execution undefined). May and should use some of these placeholders: {failureType}, {instanceType}, {isMaster}, {isCoMaster}, {failureDescription}, {command}, {failedHost}, {failureCluster}, {failureClusterAlias}, {failureClusterDomain}, {failedPort}, {countReplicas}, {replicaHosts}, {isDowntimed}
+	PrePromotionProcesses                      []string          // Processes to execute right after the recovery is resolved but before standard post-failover actions. Uses same placeholders as PostFailoverProcesses
 	PostFailoverProcesses                      []string          // Processes to execute after doing a failover (order of execution undefined). May and should use some of these placeholders: {failureType}, {instanceType}, {isMaster}, {isCoMaster}, {failureDescription}, {command}, {failedHost}, {failureCluster}, {failureClusterAlias}, {failureClusterDomain}, {failedPort}, {successorHost}, {successorPort}, {successorBinlogCoordinates}, {successorAlias}, {countReplicas}, {replicaHosts}, {isDowntimed}, {isSuccessful}, {lostReplicas}, {countLostReplicas}
 	PostUnsuccessfulFailoverProcesses          []string          // Processes to execute after a not-completely-successful failover (order of execution undefined). May and should use some of these placeholders: {failureType}, {instanceType}, {isMaster}, {isCoMaster}, {failureDescription}, {command}, {failedHost}, {failureCluster}, {failureClusterAlias}, {failureClusterDomain}, {failedPort}, {successorHost}, {successorPort}, {successorBinlogCoordinates}, {successorAlias}, {countReplicas}, {replicaHosts}, {isDowntimed}, {isSuccessful}, {lostReplicas}, {countLostReplicas}
 	PostMasterFailoverProcesses                []string          // Processes to execute after doing a master failover (order of execution undefined). Uses same placeholders as PostFailoverProcesses
@@ -282,6 +283,7 @@ type Configuration struct {
 	ReasonableLockedSemiSyncMasterSeconds      uint              // Time to evaluate the LockedSemiSyncHypothesis before triggering the LockedSemiSync analysis; falls back to ReasonableReplicationLagSeconds if not set
 	PrependMessagesWithOrcIdentity             string            // use FQDN/hostname/custom to prefix error message returned to the client. Empty string (default)/none skips prefixing.
 	CustomOrcIdentity                          string            // use if PrependMessagesWithOrcIdentity is 'custom'
+	ForceRegroupReplicaBeforePrimaryFailover   bool              // when true, forces replica regrouping (GTID/PGTID) to run synchronously even if the chosen candidate is ideal. Default: false
 }
 
 // ToJSONString will marshal this configuration as JSON
@@ -420,6 +422,7 @@ func newConfiguration() *Configuration {
 		OnFailureDetectionProcesses:                []string{},
 		PreGracefulTakeoverProcesses:               []string{},
 		PreFailoverProcesses:                       []string{},
+		PrePromotionProcesses:                      []string{},
 		PostMasterFailoverProcesses:                []string{},
 		PostIntermediateMasterFailoverProcesses:    []string{},
 		PostFailoverProcesses:                      []string{},
@@ -460,6 +463,7 @@ func newConfiguration() *Configuration {
 		ReasonableLockedSemiSyncMasterSeconds:      0,
 		PrependMessagesWithOrcIdentity:             "",
 		CustomOrcIdentity:                          "",
+		ForceRegroupReplicaBeforePrimaryFailover:   false,
 	}
 }
 

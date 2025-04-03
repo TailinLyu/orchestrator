@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+echo "Forcing master failover..."
+orchestrator-client -c force-master-failover --alias ci
+
+# Wait for failover to complete
+sleep 5
+
+# Verify the outcome
+orchestrator-client -c topology-tabulated -alias ci | cut -d'|' -f 1,2,3
+
+echo "Step 02-force-recover completed."
