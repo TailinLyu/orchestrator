@@ -1,0 +1,5 @@
+{
+  "PrePromotionProcesses": [
+    "echo '(before promotion) Recovery from {failureType} on {failureCluster} resolved. isSuccessful: {isSuccessful}, Successor: {successorHost}:{successorPort}' >> /tmp/prepromotion_test.log"
+  ]
+}

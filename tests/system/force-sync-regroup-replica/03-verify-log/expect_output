@@ -1,0 +1,4 @@
+Found recovery UID: 
+Found message confirming ForceRegroupReplicaBeforePrimaryFailover was active:
+Successfully verified ForceRegroupReplicaBeforePrimaryFailover was used during recovery.
+Step 03-verify-log completed.

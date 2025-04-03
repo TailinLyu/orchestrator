@@ -60,6 +60,9 @@
   "PreFailoverProcesses": [
     "echo 'Will recover from {failureType} on {failureCluster}' >> /tmp/recovery.log"
   ],
+  "PrePromotionProcesses": [
+    "echo '(before promotion) Recovery from {failureType} on {failureCluster} resolved. isSuccessful: {isSuccessful}, Successor: {successorHost}:{successorPort}' >> /tmp/recovery.log"
+  ],
   "PostFailoverProcesses": [
     "echo '(for all types) Recovered from {failureType} on {failureCluster}. Failed: {failedHost}:{failedPort}; Successor: {successorHost}:{successorPort}' >> /tmp/recovery.log"
   ],

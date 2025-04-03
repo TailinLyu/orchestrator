@@ -1,0 +1,6 @@
+Forcing master failover...
+127.0.0.1:10112
+127.0.0.1:10112  |0s|ok
++ 127.0.0.1:10113|0s|ok
++ 127.0.0.1:10114|0s|ok
+Step 02-force-recover completed.

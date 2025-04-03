@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Perform a force master failover which should trigger our PrePromotionProcesses hook
+orchestrator-client -c force-master-failover -alias ci
+
+# Give it a moment to complete and update logs
+sleep 2

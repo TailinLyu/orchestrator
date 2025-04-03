@@ -215,3 +215,31 @@ func TestHttpAdvertise(t *testing.T) {
 		test.S(t).ExpectNotNil(err)
 	}
 }
+
+func TestForceRegroupReplicaBeforePrimaryFailover(t *testing.T) {
+	c := newConfiguration()
+	// Verify default is false
+	test.S(t).ExpectFalse(c.ForceRegroupReplicaBeforePrimaryFailover)
+	// Verify it can be set
+	c.ForceRegroupReplicaBeforePrimaryFailover = true
+	err := c.postReadAdjustments()
+	test.S(t).ExpectNil(err)
+	test.S(t).ExpectTrue(c.ForceRegroupReplicaBeforePrimaryFailover)
+}
+
+func TestPrePromotionProcesses(t *testing.T) {
+	{
+		c := newConfiguration()
+		c.PrePromotionProcesses = []string{}
+		err := c.postReadAdjustments()
+		test.S(t).ExpectNil(err)
+		test.S(t).ExpectEquals(len(c.PrePromotionProcesses), 0)
+	}
+	{
+		c := newConfiguration()
+		c.PrePromotionProcesses = []string{"process1", "process2", "process3"}
+		err := c.postReadAdjustments()
+		test.S(t).ExpectNil(err)
+		test.S(t).ExpectEquals(len(c.PrePromotionProcesses), 3)
+	}
+}

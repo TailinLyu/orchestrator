@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Remove our test configuration 
+rm -f /etc/orchestrator-ci.conf.d/config.json
+
+# Remove test log file
+rm -f /tmp/prepromotion_test.log
+rm -f /tmp/orchestrator.log.lines
+
+# Reload orchestrator to clear our configuration
+systemctl reload orchestrator 
