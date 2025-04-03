@@ -536,18 +536,36 @@ func recoverDeadMaster(topologyRecovery *TopologyRecovery, candidateInstanceKey 
 			return false
 		}
 		AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("RecoverDeadMaster: promotedReplicaIsIdeal(%+v)", promoted.Key))
-		if candidateInstanceKey != nil { //explicit request to promote a specific server
-			return promoted.Key.Equals(candidateInstanceKey)
-		}
-		if promoted.DataCenter == topologyRecovery.AnalysisEntry.AnalyzedInstanceDataCenter &&
+
+		isIdeal := false // Flag to track if criteria are met
+
+		if candidateInstanceKey != nil { // Explicit request to promote a specific server
+			if promoted.Key.Equals(candidateInstanceKey) {
+				isIdeal = true
+			}
+		} else if promoted.DataCenter == topologyRecovery.AnalysisEntry.AnalyzedInstanceDataCenter &&
 			promoted.PhysicalEnvironment == topologyRecovery.AnalysisEntry.AnalyzedInstancePhysicalEnvironment {
+			// Automatic failover case: check DC, Env, and Promotion Rule
 			if promoted.PromotionRule == inst.MustPromoteRule || promoted.PromotionRule == inst.PreferPromoteRule ||
 				(hasBestPromotionRule && promoted.PromotionRule != inst.MustNotPromoteRule) {
-				AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("RecoverDeadMaster: found %+v to be ideal candidate; will optimize recovery", promoted.Key))
-				postponedAll = true
-				return true
+				isIdeal = true
 			}
 		}
+
+		if isIdeal {
+			// It meets the ideal criteria, BUT should we postpone?
+			if config.Config.ForceRegroupReplicaBeforePrimaryFailover {
+				// NO, config forces synchronous execution
+				AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("RecoverDeadMaster: found %+v to be ideal candidate, but ForceRegroupReplicaBeforePrimaryFailover is true; will NOT postpone regroup", promoted.Key))
+				return false // Returning false prevents postponement
+			}
+			// YES, config allows postponement for ideal candidates
+			AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("RecoverDeadMaster: found %+v to be ideal candidate; will optimize recovery by postponing regroup", promoted.Key))
+			postponedAll = true // Set side effect ONLY when actually postponing
+			return true         // Returning true allows postponement
+		}
+
+		// Not ideal anyway
 		return false
 	}
 	switch topologyRecovery.RecoveryType {
@@ -898,6 +916,13 @@ func checkAndRecoverDeadMaster(analysisEntry inst.ReplicationAnalysis, candidate
 	resolveRecovery(topologyRecovery, promotedReplica)
 	// Now, see whether we are successful or not. From this point there's no going back.
 	if promotedReplica != nil {
+		// Execute pre-promotion processes right after resolving recovery state
+		if !skipProcesses {
+			if err := executeProcesses(config.Config.PrePromotionProcesses, "PrePromotionProcesses", topologyRecovery, false); err != nil {
+				AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("PrePromotionProcesses failed: %+v", err))
+				return recoveryAttempted, topologyRecovery, err
+			}
+		}
 		// Success!
 		recoverDeadMasterSuccessCounter.Inc(1)
 		AuditTopologyRecovery(topologyRecovery, fmt.Sprintf("RecoverDeadMaster: successfully promoted %+v", promotedReplica.Key))

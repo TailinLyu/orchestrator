@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+# The default topology (ci cluster, 127.0.0.1:10111-10114) is already deployed.
+# We need to verify the test environment is as expected.
+
+# Verify datacenter assignments
+echo "Verifying datacenter assignments..."
+for port in 10111 10112 10113 10114; do
+  dc=$(orchestrator-client -c api -path instance/127.0.0.1/${port} | jq -r '.DataCenter')
+  echo "127.0.0.1:${port} is in datacenter: ${dc}"
+done
+
+# Register candidates to ensure they're all eligible
+# The output of these commands is the hostname:port of the registered instance
+orchestrator-client -c register-candidate -i 127.0.0.1:10112 -promotion-rule prefer
+orchestrator-client -c register-candidate -i 127.0.0.1:10113 -promotion-rule prefer
+orchestrator-client -c register-candidate -i 127.0.0.1:10114 -promotion-rule prefer
+
+# Give time for the settings to apply
+sleep 3
+
+# Check initial topology state
+echo "Checking initial topology state..."
+orchestrator-client -c topology-tabulated -alias ci | cut -d'|' -f 1,2,3
+
+echo "Step 01-list-topology finished."

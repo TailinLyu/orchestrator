@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+# --- Verification for forced regroup log ---
+
+# 1. Get recovery ID for the ci cluster using the API
+RECOVERY_JSON=$(orchestrator-client -c api --path audit-recovery/alias/ci)
+RECOVERY_UID=$(echo "$RECOVERY_JSON" | grep -o '"UID": "[^"]*"' | head -1 | cut -d '"' -f 4)
+
+if [[ -z "$RECOVERY_UID" ]]; then
+  echo "ERROR: Could not find recovery UID for cluster ci"
+  exit 1
+fi
+echo "Found recovery UID: "
+
+# 2. Get the recovery steps for this UID
+RECOVERY_STEPS=$(orchestrator-client -c api --path audit-recovery-steps/$RECOVERY_UID)
+
+# 3. Look for the exact message that indicates ForceRegroupReplicaBeforePrimaryFailover was used
+# The message we're looking for is:
+# "RecoverDeadMaster: found 127.0.0.1:10112 to be ideal candidate, but ForceRegroupReplicaBeforePrimaryFailover is true; will NOT postpone regroup"
+FORCE_REGROUP_MESSAGE=$(echo "$RECOVERY_STEPS" | grep "ForceRegroupReplicaBeforePrimaryFailover is true; will NOT postpone regroup")
+
+if [[ -z "$FORCE_REGROUP_MESSAGE" ]]; then
+  echo "ERROR: Could not find the message indicating ForceRegroupReplicaBeforePrimaryFailover was used"
+  echo "This message should contain 'ForceRegroupReplicaBeforePrimaryFailover is true; will NOT postpone regroup'"
+  echo "Full recovery steps for debugging:"
+  echo "$RECOVERY_STEPS"
+  exit 1
+fi
+
+echo "Found message confirming ForceRegroupReplicaBeforePrimaryFailover was active:"
+# Not echoing the actual message to avoid diff issues
+
+echo "Successfully verified ForceRegroupReplicaBeforePrimaryFailover was used during recovery."
+echo "Step 03-verify-log completed."
